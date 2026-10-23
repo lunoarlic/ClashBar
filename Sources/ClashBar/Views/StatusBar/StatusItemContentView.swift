@@ -5,9 +5,16 @@ final class StatusItemContentView {
     private let iconSize: CGFloat = 24
     private let brandIconRenderSize: CGFloat = 24
     private let symbolPointSize: CGFloat = 20
-    private let iconTextSpacing: CGFloat = 0
-    private let textContainerWidth: CGFloat = 43
-    private let textLineHeight: CGFloat = 11
+    /// Deliberate gap between the icon and the speed stack; the text box itself is
+    /// measured to fit the current strings so no dead space pads the gap further.
+    private let iconTextSpacing: CGFloat = 2
+    private let speedTextFontSize: CGFloat = 8
+    private let textLineHeight: CGFloat = 9
+
+    private static let fallbackSpeedTextWidth: CGFloat = 34
+    /// Width of the speed text box for the current lines; shrinks only with hysteresis
+    /// so digit changes don't oscillate the status item width every traffic sample.
+    private var speedTextWidth: CGFloat = StatusItemContentView.fallbackSpeedTextWidth
 
     private static let renderScales: [CGFloat] = [1, 2, 3]
 
@@ -63,9 +70,9 @@ final class StatusItemContentView {
         case .iconOnly:
             return self.iconSize
         case .iconAndSpeed:
-            return self.iconSize + self.iconTextSpacing + self.textContainerWidth
+            return self.iconSize + self.iconTextSpacing + self.speedTextWidth
         case .speedOnly:
-            return self.textContainerWidth
+            return self.speedTextWidth
         }
     }
 
@@ -80,12 +87,36 @@ final class StatusItemContentView {
         let downLine = display.speedLines?.down ?? ""
         let showsSpeed = display.mode != .iconOnly
 
+        if showsSpeed {
+            self.updateSpeedTextWidth(up: upLine, down: downLine)
+        }
+
         self.image = self.composeImage(
             iconImage: iconImage,
             upLine: showsSpeed ? upLine : "",
             downLine: showsSpeed ? downLine : "",
             showsIcon: display.mode != .speedOnly,
             showsSpeed: showsSpeed)
+    }
+
+    private func updateSpeedTextWidth(up: String, down: String) {
+        let font = self.speedTextFont
+        let measured = max(
+            (up as NSString).size(withAttributes: [.font: font]).width,
+            (down as NSString).size(withAttributes: [.font: font]).width)
+        guard measured > 0 else {
+            self.speedTextWidth = Self.fallbackSpeedTextWidth
+            return
+        }
+
+        let target = (measured + 0.5).rounded(.up)
+        if target > self.speedTextWidth || target < self.speedTextWidth - 1.5 {
+            self.speedTextWidth = target
+        }
+    }
+
+    private var speedTextFont: NSFont {
+        NSFont.monospacedDigitSystemFont(ofSize: self.speedTextFontSize, weight: .semibold)
     }
 
     private func iconImage(for display: MenuBarDisplay) -> NSImage? {
@@ -197,7 +228,7 @@ final class StatusItemContentView {
         paragraph.alignment = .right
         paragraph.lineBreakMode = .byTruncatingHead
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: MenuBarLayoutTokens.FontSize.statusBar, weight: .semibold),
+            .font: self.speedTextFont,
             .foregroundColor: NSColor.black,
             .paragraphStyle: paragraph,
         ]
@@ -207,12 +238,12 @@ final class StatusItemContentView {
         let upRect = CGRect(
             x: speed.originX,
             y: stackOriginY + self.textLineHeight,
-            width: self.textContainerWidth,
+            width: self.speedTextWidth,
             height: self.textLineHeight)
         let downRect = CGRect(
             x: speed.originX,
             y: stackOriginY,
-            width: self.textContainerWidth,
+            width: self.speedTextWidth,
             height: self.textLineHeight)
 
         (speed.up as NSString).draw(in: upRect, withAttributes: attributes)
