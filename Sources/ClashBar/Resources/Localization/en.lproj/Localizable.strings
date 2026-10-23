@@ -176,6 +176,8 @@
 "ui.settings.port.tproxy" = "TProxy Port";
 "ui.settings.system_proxy_exceptions_hint" = "These entries are written to macOS proxy bypass domains and preserved when system proxy is re-applied.";
 "ui.settings.system_proxy_exceptions_empty" = "No bypass rules yet.";
+"ui.settings.config_override" = "Config Override (override.yaml)";
+"ui.settings.config_override_hint" = "Edit override.yaml in the config directory to add DIRECT/bypass rules in bulk: +rules entries are inserted before subscription rules (matched first), and top-level keys such as ipv6 override the subscription; the core reloads automatically on save.";
 "ui.settings.ssid_strategy.current_ssid.none" = "No Wi-Fi Connected";
 "ui.settings.ssid_strategy.status.authorized" = "Authorized";
 "ui.settings.ssid_strategy.status.not_determined" = "Not Requested";
@@ -187,6 +189,8 @@
 "ui.action.remove_exception" = "Remove";
 "ui.action.restore_defaults" = "Restore Defaults";
 "ui.action.save_exceptions" = "Save";
+"ui.action.open_config_override" = "Open Override File";
+"ui.action.create_config_override" = "Create Override File";
 
 "ui.settings.display_mode.icon_and_speed" = "Icon + Speed";
 "ui.settings.display_mode.icon_only" = "Icon Only";
@@ -365,6 +369,10 @@
 "log.proxy_export.copied" = "Proxy export command copied";
 "log.logs.copied_all" = "Copied all logs (%d entries)";
 "log.config.changed_restart" = "Config changed, restarting core";
+"log.config.override_changed_restart" = "Override file changed, restarting core";
+"log.config.override.applied" = "Applied config override %@ (keys: %@)";
+"log.config.override.merge_failed" = "Failed to merge config override, falling back to the original config: %@";
+"log.config.override.create_failed" = "Failed to create override file: %@";
 "log.providers.fetch_proxy_failed" = "Providers refresh: fetch proxy providers failed: %@";
 "log.providers.fetch_rule_failed" = "Providers refresh: fetch rule providers failed: %@";
 "log.providers.proxy_update_failed" = "Providers refresh: proxy provider update failed (%@): %@";

@@ -507,6 +507,36 @@ struct SystemTabView: TranslatingView {
                 .frame(maxHeight: self.isExceptionsExpanded ? .infinity : 0, alignment: .top)
                 .clipped()
                 .opacity(self.isExceptionsExpanded ? 1 : 0)
+
+                self.settingsToggleRow(
+                    self.tr("ui.settings.config_override"),
+                    symbol: "square.and.pencil",
+                    isOn: Binding(
+                        get: { self.appViewModel.isConfigOverrideEnabled },
+                        set: { self.appViewModel.applyConfigOverrideEnabled($0) }))
+
+                VStack(alignment: .leading, spacing: T.space4) {
+                    Text(self.tr("ui.settings.config_override_hint"))
+                        .font(.app(size: T.FontSize.caption, weight: .regular))
+                        .foregroundStyle(nativeSecondaryLabel)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Button {
+                        self.appViewModel.openConfigOverrideFile()
+                    } label: {
+                        Label(
+                            self.appViewModel.configOverrideFileExists
+                                ? self.tr("ui.action.open_config_override")
+                                : self.tr("ui.action.create_config_override"),
+                            systemImage: self.appViewModel.configOverrideFileExists
+                                ? "doc.text"
+                                : "plus.square.dashed")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .appBorderedButtonStyle()
+                    .controlSize(.small)
+                }
+                .menuRowPadding(vertical: T.space4)
             }
             .animation(.spring(response: 0.30, dampingFraction: 0.80), value: self.isExceptionsExpanded)
 

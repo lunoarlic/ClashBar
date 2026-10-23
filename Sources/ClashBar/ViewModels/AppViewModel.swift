@@ -150,6 +150,7 @@ final class AppViewModel: ObservableObject {
     @Published var systemProxyOpenFailureHint: String?
     @Published var systemProxyExceptions: [EditableSystemProxyException] = []
     @Published var systemProxyNewException: String = ""
+    @Published var isConfigOverrideEnabled: Bool = true
     @Published var ssidStrategyRules: [SSIDStrategyRule] = []
     @Published var ssidStrategyCurrentSSID: String?
     @Published var ssidStrategyAuthorizationStatus: SSIDMonitorAuthorizationStatus = .notDetermined
@@ -414,6 +415,7 @@ final class AppViewModel: ObservableObject {
     let editableSettingsSnapshotKey = "clashbar.settings.editable.snapshot.v1"
     let systemProxyEnabledOnQuitKey = "clashbar.system_proxy.enabled_on_quit"
     let systemProxyExceptionsKey = "clashbar.system_proxy.exceptions.v1"
+    let configOverrideEnabledKey = "clashbar.config.override.enabled"
     let tunStackKey = "clashbar.tun.stack"
     let ssidStrategyRulesKey = "clashbar.ssid.strategy.rules.v1"
     let uiLanguageKey = "clashbar.ui.language"

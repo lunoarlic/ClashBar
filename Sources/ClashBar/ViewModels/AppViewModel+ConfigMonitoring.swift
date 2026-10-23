@@ -7,7 +7,8 @@ extension AppViewModel {
         guard let directoryURL = self.ensureConfigDirectoryAvailable() else { return }
 
         _ = self.configService.reloadConfigs()
-        self.configFileSignatureSnapshot = Self.configFileSignatureSnapshot(for: self.configService.availableConfigs)
+        self.configFileSignatureSnapshot = Self.configFileSignatureSnapshot(
+            for: self.monitoredConfigFileURLs(self.configService.availableConfigs))
         self.configDirectoryMonitor = ConfigDirectoryMonitor(
             directoryURL: directoryURL,
             selectedFileURL: self.configService.selectedConfig)
@@ -20,7 +21,8 @@ extension AppViewModel {
 
     func syncConfigSignatureSnapshotToMonitorBaseline() {
         guard self.configDirectoryMonitor != nil else { return }
-        self.configFileSignatureSnapshot = Self.configFileSignatureSnapshot(for: self.configService.availableConfigs)
+        self.configFileSignatureSnapshot = Self.configFileSignatureSnapshot(
+            for: self.monitoredConfigFileURLs(self.configService.availableConfigs))
     }
 
     func stopConfigDirectoryMonitoring() {
@@ -45,9 +47,11 @@ extension AppViewModel {
         guard let directoryURL = self.ensureConfigDirectoryAvailable() else { return }
 
         let previousSelectedPath = self.configService.selectedConfig?.path
+        let overrideURL = self.existingConfigOverrideFileURL()
         let scan = await Task.detached(priority: .utility) {
             let files = ConfigDirectoryManager.scanConfigFiles(in: directoryURL)
-            let signatures = Self.configFileSignatureSnapshot(for: files)
+            let signatures = Self.configFileSignatureSnapshot(
+                for: files + (overrideURL.map { [$0] } ?? []))
             return (files, signatures)
         }.value
         guard !Task.isCancelled else { return }
@@ -55,6 +59,7 @@ extension AppViewModel {
         let changedFileNames = self.changedConfigFileNames(
             previous: self.configFileSignatureSnapshot,
             current: scan.1)
+        let overrideChanged = changedFileNames.contains { ConfigOverrideMerger.isReservedFileName($0) }
         var selectedConfigChanged = false
         if !changedFileNames.isEmpty {
             self.configService.applyScannedConfigs(scan.0)
@@ -73,14 +78,14 @@ extension AppViewModel {
             self.pendingConfigChangeRestart = false
             return
         }
-        guard self.pendingConfigChangeRestart || selectedConfigChanged else { return }
+        guard self.pendingConfigChangeRestart || selectedConfigChanged || overrideChanged else { return }
         guard self.isRuntimeRunning else {
             self.pendingConfigChangeRestart = false
             return
         }
 
         if self.isCoreActionProcessing {
-            if selectedConfigChanged, !self.isTunSyncing {
+            if selectedConfigChanged || overrideChanged, !self.isTunSyncing {
                 self.pendingConfigChangeRestart = true
             }
             self.scheduleConfigDirectoryRefresh(delayNanoseconds: 500_000_000)
@@ -88,8 +93,16 @@ extension AppViewModel {
         }
 
         self.pendingConfigChangeRestart = false
-        self.appendLog(level: "info", message: self.tr("log.config.changed_restart"))
+        self.appendLog(
+            level: "info",
+            message: overrideChanged && !selectedConfigChanged
+                ? tr("log.config.override_changed_restart")
+                : tr("log.config.changed_restart"))
         await self.restartCore(trigger: .configSwitch)
+    }
+
+    private func monitoredConfigFileURLs(_ files: [URL]) -> [URL] {
+        files + [self.existingConfigOverrideFileURL()].compactMap { $0 }
     }
 
     private nonisolated static func configFileSignatureSnapshot(for files: [URL]) -> [String: String] {

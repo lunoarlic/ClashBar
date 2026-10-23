@@ -29,18 +29,19 @@ extension AppViewModel {
         settingsOverlay = self.overlayApplyingPendingCoreFeatureRecovery(settingsOverlay)
         preserveLocalSettingsOnNextSync = true
         do {
-            guard let configPath = await resolveSelectedConfigPath() else {
+            guard let sourceConfigPath = await resolveSelectedConfigPath() else {
                 let message = tr("log.start.no_config")
                 self.reportCoreStartFailure(message: message, trigger: trigger, markFailedOnManual: false)
                 return
             }
+            let configPath = self.resolveRuntimeConfigPath(sourceConfigPath: sourceConfigPath)
 
             settingsOverlay = try await prepareTunOverlayForCoreStartup(settingsOverlay)
 
             guard await self.validateConfigBeforeCoreLaunch(configPath: configPath) else {
                 preserveLocalSettingsOnNextSync = false
                 if trigger == .auto {
-                    let fileName = URL(fileURLWithPath: configPath).lastPathComponent
+                    let fileName = URL(fileURLWithPath: sourceConfigPath).lastPathComponent
                     startupErrorMessage = tr("app.config.validation_failed.startup", fileName)
                     statusText = "Stopped"
                     apiStatus = .unknown
@@ -57,6 +58,7 @@ extension AppViewModel {
 
             await self.completeCoreBootstrap(
                 configPath: configPath,
+                sourceConfigPath: sourceConfigPath,
                 settingsOverlay: settingsOverlay,
                 options: CoreBootstrapOptions(
                     overlaySyncingKey: "start-overlay",
@@ -119,10 +121,11 @@ extension AppViewModel {
         preserveLocalSettingsOnNextSync = true
         cancelProviderRefresh(reason: "restart requested")
         do {
-            guard let configPath = await resolveSelectedConfigPath() else {
+            guard let sourceConfigPath = await resolveSelectedConfigPath() else {
                 self.reportCoreRestartFailure(message: tr("log.start.no_config"))
                 return
             }
+            let configPath = self.resolveRuntimeConfigPath(sourceConfigPath: sourceConfigPath)
 
             guard await self.validateConfigBeforeCoreLaunch(configPath: configPath) else {
                 preserveLocalSettingsOnNextSync = false
@@ -139,6 +142,7 @@ extension AppViewModel {
             _ = try await self.processManager.restart(configPath: configPath, controller: launchController)
             await self.completeCoreBootstrap(
                 configPath: configPath,
+                sourceConfigPath: sourceConfigPath,
                 settingsOverlay: settingsOverlay,
                 options: CoreBootstrapOptions(
                     overlaySyncingKey: "restart-overlay",
@@ -317,6 +321,7 @@ extension AppViewModel {
 
     private func completeCoreBootstrap(
         configPath: String,
+        sourceConfigPath: String,
         settingsOverlay: EditableSettingsSnapshot,
         options: CoreBootstrapOptions) async
     {
@@ -343,7 +348,7 @@ extension AppViewModel {
             refreshStatusBeforeOverlay: options.refreshSystemProxyBeforeOverlay,
             refreshStatusAfterBootstrap: options.refreshSystemProxyAfterBootstrap)
 
-        defaults.set(configPath, forKey: lastSuccessfulConfigPathKey)
+        defaults.set(sourceConfigPath, forKey: lastSuccessfulConfigPathKey)
         startupErrorMessage = nil
         await self.restoreCoreFeaturesAfterStartupIfNeeded()
         enforceNetworkManagedCorePolicyIfNeeded()

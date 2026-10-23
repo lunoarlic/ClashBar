@@ -273,8 +273,10 @@ extension AppViewModel {
 
     func selectedConfigDeclaresTunStack() async -> Bool {
         guard
-            let configPath = await resolveSelectedConfigPath(),
-            let raw = try? String(contentsOfFile: configPath, encoding: .utf8)
+            let sourceConfigPath = await resolveSelectedConfigPath(),
+            let raw = try? String(
+                contentsOfFile: self.resolveRuntimeConfigPath(sourceConfigPath: sourceConfigPath),
+                encoding: .utf8)
         else {
             return false
         }

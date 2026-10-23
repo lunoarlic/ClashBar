@@ -321,10 +321,11 @@ extension AppViewModel {
 
         do {
             ensureAPIClient()
-            guard let configPath = await self.resolveSelectedConfigPath() else {
+            guard let sourceConfigPath = await self.resolveSelectedConfigPath() else {
                 appendLog(level: "error", message: tr("log.start.no_config"))
                 return
             }
+            let configPath = self.resolveRuntimeConfigPath(sourceConfigPath: sourceConfigPath)
             try await self.clientOrThrow().requestNoResponse(.putConfigs(force: false, path: configPath, payload: nil))
             try await self.restoreTunAfterConfigReloadIfNeeded(expectedEnabled: expectedTunEnabled)
             appendLog(level: "info", message: tr("log.action.success", actionName))

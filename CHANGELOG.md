@@ -1,3 +1,18 @@
+## v0.3.7
+
+![macOS](https://img.shields.io/badge/macOS-Supported-000000?style=flat-square&logo=apple) ![Version](https://img.shields.io/badge/Release-v0.3.7-10B981?style=flat-square) ![Core](https://img.shields.io/badge/Core-Mihomo-6366f1?style=flat-square)
+
+> 本次更新新增 **配置覆写（override.yaml）**：直连/绕过规则不再需要逐条在界面里手动输入，也不需要在订阅更新后重新注入——在配置目录放一份 `override.yaml`，用 `+rules` 写直连规则、用顶层键覆盖 `ipv6` 等配置，保存后自动重载内核；订阅再怎么更新覆写都会重新套用。兼容 Clash Verge 的 `+` 前插写法，配套 14 个合并器单元测试。
+
+### 📝 更新日志 (Changelog)
+
+**✨ 新增功能 (New Features)**
+
+- ![Feature](https://img.shields.io/badge/Feature-10B981?style=flat-square) **配置覆写文件 override.yaml**：配置目录下的 `override.yaml` / `override.yml` 为保留文件，不会出现在可选配置列表中。启动、重启与重载内核时，ClashBar 会把它合并进当前选中配置（合并产物写入配置目录的隐藏文件 `.runtime-merged.yaml`，再交给 mihomo 校验与加载）：`+rules:` 等带 `+` 前缀的列表键会将条目**前插**到订阅对应列表最前（优先匹配，适合添加 DOMAIN-SUFFIX / IP-CIDR 直连绕过规则）；不带 `+` 的顶层键（如 `ipv6: false`、`dns:`）会**覆盖**订阅同名键。合并为逐行文本操作，订阅其余内容（含注释）保持原样；覆写文件仅有注释或为空时自动忽略。
+- ![Feature](https://img.shields.io/badge/Feature-10B981?style=flat-square) **保存即生效**：监听配置目录时一并跟踪覆写文件签名，编辑保存 `override.yaml` 后自动重启内核套用新规则；系统设置页新增「配置覆写」开关与「打开/创建覆写文件」按钮，首次创建会生成带用法说明的模板。
+
+---
+
 ## v0.3.6
 
 ![macOS](https://img.shields.io/badge/macOS-Supported-000000?style=flat-square&logo=apple) ![Version](https://img.shields.io/badge/Release-v0.3.6-10B981?style=flat-square) ![Core](https://img.shields.io/badge/Core-Mihomo-6366f1?style=flat-square)

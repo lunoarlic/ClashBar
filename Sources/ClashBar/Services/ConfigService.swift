@@ -173,7 +173,9 @@ final class ConfigDirectoryManager {
             let resolved = fileURL.resolvingSymlinksInPath()
             let isRegularFile = (try? resolved.resourceValues(forKeys: keys).isRegularFile) ?? false
             let fileExtension = fileURL.pathExtension.lowercased()
-            return isRegularFile && (fileExtension == "yaml" || fileExtension == "yml")
+            guard isRegularFile, fileExtension == "yaml" || fileExtension == "yml" else { return false }
+            // The reserved override file is merged into profiles, not a selectable profile itself.
+            return !ConfigOverrideMerger.isReservedFileName(fileURL.lastPathComponent)
         }.sorted {
             $0.lastPathComponent < $1.lastPathComponent
         }

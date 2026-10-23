@@ -178,6 +178,8 @@
 "ui.settings.port.tproxy" = "TProxy 端口";
 "ui.settings.system_proxy_exceptions_hint" = "这些条目会写入 macOS 的代理绕过域名列表，并在系统代理重新应用时继续保留。";
 "ui.settings.system_proxy_exceptions_empty" = "暂无绕过规则。";
+"ui.settings.config_override" = "配置覆写 (override.yaml)";
+"ui.settings.config_override_hint" = "编辑配置目录下的 override.yaml 即可批量添加直连/绕过规则：+rules 列表会插入订阅规则最前（优先匹配），ipv6 等顶层键会覆盖订阅同名配置；保存后自动重载内核。";
 "ui.settings.ssid_strategy.current_ssid.none" = "未连接 Wi-Fi";
 "ui.settings.ssid_strategy.status.authorized" = "已授权";
 "ui.settings.ssid_strategy.status.not_determined" = "未请求";
@@ -189,6 +191,8 @@
 "ui.action.remove_exception" = "删除";
 "ui.action.restore_defaults" = "恢复默认";
 "ui.action.save_exceptions" = "保存";
+"ui.action.open_config_override" = "打开覆写文件";
+"ui.action.create_config_override" = "创建覆写文件";
 
 "ui.settings.display_mode.icon_and_speed" = "图标 + 速度";
 "ui.settings.display_mode.icon_only" = "仅图标";
@@ -367,6 +371,10 @@
 "log.proxy_export.copied" = "已复制代理导出命令";
 "log.logs.copied_all" = "已复制全部日志（%d 条）";
 "log.config.changed_restart" = "配置已变更，正在重启内核";
+"log.config.override_changed_restart" = "覆写配置已变更，正在重启内核";
+"log.config.override.applied" = "已应用覆写配置 %@（生效键: %@）";
+"log.config.override.merge_failed" = "覆写配置合并失败，已回退使用原始配置: %@";
+"log.config.override.create_failed" = "创建覆写文件失败: %@";
 "log.providers.fetch_proxy_failed" = "Providers 刷新: 获取代理提供者失败: %@";
 "log.providers.fetch_rule_failed" = "Providers 刷新: 获取规则提供者失败: %@";
 "log.providers.proxy_update_failed" = "Providers 刷新: 更新代理提供者失败（%@）: %@";

@@ -71,6 +71,7 @@ extension AppViewModel {
         let persistedSystemProxyExceptions = loadPersistedSystemProxyExceptions() ?? Self.defaultSystemProxyExceptions
         self.replaceSystemProxyExceptionsDraft(with: persistedSystemProxyExceptions)
         self.lastSavedSystemProxyExceptions = self.normalizedSystemProxyExceptionValues(persistedSystemProxyExceptions)
+        self.isConfigOverrideEnabled = self.loadPersistedConfigOverrideEnabled()
 
         self.startupRefreshTask = Task { [weak self] in
             guard let self else { return }
