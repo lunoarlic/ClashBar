@@ -368,6 +368,7 @@
 "log.tun.startup_check_failed" = "启动时校验 TUN 权限失败: %@";
 "log.tun.permission_requesting" = "正在请求管理员权限以启用 TUN 模式...";
 "log.tun.permission_granted" = "TUN 权限授予成功。";
+"log.tun.permission_granted_restart" = "TUN 权限已授予，重启内核使运行中的进程获得新特权…";
 "log.proxy_export.copied" = "已复制代理导出命令";
 "log.logs.copied_all" = "已复制全部日志（%d 条）";
 "log.config.changed_restart" = "配置已变更，正在重启内核";

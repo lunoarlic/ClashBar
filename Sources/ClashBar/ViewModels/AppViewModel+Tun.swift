@@ -21,11 +21,20 @@ extension AppViewModel {
         defer { isTunSyncing = false }
 
         do {
+            var didGrantPermissions = false
             if enabled, !self.isRemoteTarget {
-                try await self.ensureTunPermissions(requestIfMissing: true)
+                didGrantPermissions = try await self.ensureTunPermissions(requestIfMissing: true)
             }
 
             guard self.isRemoteTarget || self.isRuntimeRunning else { return }
+
+            // setuid 特权只在进程 exec 时生效:首次授权时运行中的内核仍是普通权限,
+            // 直接 PATCH 会被 mihomo 以 operation not permitted 回滚,须重启内核生效。
+            if enabled, didGrantPermissions, !self.isRemoteTarget {
+                try await self.restartCoreAfterTunPermissionGrant(stack: nil)
+                return
+            }
+
             try await self.patchTunConfig(enable: enabled)
 
             let config = try await fetchRuntimeConfigSnapshot()
@@ -81,10 +90,16 @@ extension AppViewModel {
         defer { isTunSyncing = false }
 
         do {
+            var didGrantPermissions = false
             if !self.isRemoteTarget {
-                try await self.ensureTunPermissions(requestIfMissing: true)
+                didGrantPermissions = try await self.ensureTunPermissions(requestIfMissing: true)
             }
             guard self.isRemoteTarget || self.isRuntimeRunning else { return }
+
+            if didGrantPermissions, !self.isRemoteTarget {
+                try await self.restartCoreAfterTunPermissionGrant(stack: stack)
+                return
+            }
 
             try await self.patchTunConfig(enable: true, stack: stack)
 
@@ -182,13 +197,42 @@ extension AppViewModel {
         return current
     }
 
-    func ensureTunPermissions(requestIfMissing: Bool) async throws {
+    /// 首次授予 TUN 特权(setuid)后,运行中的内核进程拿不到新特权,须重启内核,
+    /// 由启动流程的恢复机制(overlay + verifyTunAfterOverlayIfNeeded)以 TUN 开启状态引导。
+    private func restartCoreAfterTunPermissionGrant(stack: String?) async throws {
+        appendLog(level: "info", message: tr("log.tun.permission_granted_restart"))
+
+        if let stack {
+            // 重启后由 ensureTunStackOnStartupIfNeeded 按该偏好恢复协议栈
+            defaults.set(stack, forKey: tunStackKey)
+        }
+
+        isTunEnabled = true
+        persistEditableSettingsSnapshot()
+        await self.restartCore(trigger: .restart)
+        await self.refreshTunStatusFromRuntimeConfig()
+
+        if self.isTunEnabled {
+            if let stack {
+                appendLog(level: "info", message: tr("log.tun.stack_changed", stack))
+            }
+            return
+        }
+        appendLog(
+            level: "error",
+            message: tr("log.tun.toggle_failed", tr("app.tun.error.runtime_state_mismatch")))
+    }
+
+    /// 返回 true 表示本次调用实际执行了授权(首次授予 setuid);false 表示权限已存在。
+    @discardableResult
+    func ensureTunPermissions(requestIfMissing: Bool) async throws -> Bool {
         guard let binaryPath = resolvedMihomoBinaryPath() else {
             throw TunPermissionServiceError.coreBinaryNotFound
         }
 
         do {
             try self.tunPermissionService.validateCurrentPermissions(binaryPath: binaryPath)
+            return false
         } catch TunPermissionServiceError.permissionMissing {
             guard requestIfMissing else {
                 throw TunPermissionServiceError.permissionMissing
@@ -196,6 +240,7 @@ extension AppViewModel {
             appendLog(level: "info", message: tr("log.tun.permission_requesting"))
             try await self.tunPermissionService.grantPermissions(binaryPath: binaryPath)
             appendLog(level: "info", message: tr("log.tun.permission_granted"))
+            return true
         }
     }
 

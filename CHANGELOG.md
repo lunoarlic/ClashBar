@@ -1,3 +1,17 @@
+## v0.3.8
+
+![macOS](https://img.shields.io/badge/macOS-Supported-000000?style=flat-square&logo=apple) ![Version](https://img.shields.io/badge/Release-v0.3.8-10B981?style=flat-square) ![Core](https://img.shields.io/badge/Core-Mihomo-6366f1?style=flat-square)
+
+> 本次更新是 **TUN 首次开启修复**：修复在内核已运行的情况下第一次开启 TUN 时，管理员授权成功、`mihomo` 二进制也已被 `chown root + chmod u+s`，但 TUN 始终打不开、反复报「切换 TUN 模式失败: 重启内核后 TUN 状态未生效」的问题。根因是 setuid 特权只在进程 exec 时生效——授权前启动的内核进程仍是普通权限，对它 PATCH `tun.enable` 会被 mihomo 以 `operation not permitted` 拒绝并回滚；现在首次授权后 ClashBar 会自动重启内核并以 TUN 开启状态完成引导，无需手动重启内核或 App。
+
+### 📝 更新日志 (Changelog)
+
+**🐞 修复问题 (Bug Fixes)**
+
+- ![Fix](https://img.shields.io/badge/Fix-EF4444?style=flat-square) **首次开启 TUN 授权后不生效**：`ensureTunPermissions` 现在返回本次是否真正执行了授权（首次授予 setuid）；`toggleTunMode` 与 `selectTunStack` 在「首次授权 + 本地内核运行中」时不再对旧进程直接 PATCH，而是记录「TUN 权限已授予，重启内核使运行中的进程获得新特权…」后自动重启内核，由既有的启动恢复机制（overlay 同步 + 运行态校验）以 TUN 开启状态引导；重启完成后从运行时读回真实状态校准开关，失败仍报「TUN 状态未生效」。协议栈选择路径会先把所选栈写入持久偏好，重启后自动按新栈恢复；关闭 TUN 与权限已就位时的日常开关不受影响。
+
+---
+
 ## v0.3.7
 
 ![macOS](https://img.shields.io/badge/macOS-Supported-000000?style=flat-square&logo=apple) ![Version](https://img.shields.io/badge/Release-v0.3.7-10B981?style=flat-square) ![Core](https://img.shields.io/badge/Core-Mihomo-6366f1?style=flat-square)
